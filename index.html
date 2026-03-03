@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RoadRiskLive</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans:wght@300;400;500;600&family=Noto+Sans+Devanagari:wght@400;600&family=Noto+Sans+Tamil:wght@400;600&family=Noto+Sans+Telugu:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red:#FF1E1E;--amber:#FF8C00;--blue:#1E90FF;
+  --bg:#080810;--surface:#10101A;--surface2:#18182A;--surface3:#20203A;
+  --border:#2A2A45;--text:#F0F0FF;--muted:#6B6B90;--green:#00E676;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Noto Sans',sans-serif;background:var(--bg);color:var(--text);}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 80% 10%,rgba(255,30,30,.06) 0%,transparent 60%),radial-gradient(ellipse 50% 30% at 10% 80%,rgba(30,144,255,.05) 0%,transparent 60%);pointer-events:none;z-index:0;}
+
+.app{max-width:430px;margin:0 auto;height:100%;display:flex;flex-direction:column;position:relative;z-index:1;}
+
+/* LANG BAR */
+.lang-bar{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:0 4px;flex-shrink:0;}
+.lang-btn{flex:1;padding:8px 4px;border:none;background:transparent;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--muted);letter-spacing:.03em;border-bottom:2px solid transparent;font-family:'Noto Sans',sans-serif;}
+.lang-btn.active{color:var(--red);border-bottom-color:var(--red);}
+.lang-btn:hover:not(.active){color:var(--text);}
+
+/* HEADER */
+header{padding:10px 16px 8px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;border-bottom:1px solid var(--border);}
+.logo{display:flex;align-items:center;gap:9px;}
+.logo-icon{width:36px;height:36px;background:var(--red);border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 18px rgba(255,30,30,.45);animation:pulse-logo 3s ease-in-out infinite;}
+@keyframes pulse-logo{0%,100%{box-shadow:0 0 18px rgba(255,30,30,.4);}50%{box-shadow:0 0 32px rgba(255,30,30,.7);}}
+.logo-icon svg{width:20px;height:20px;fill:white;}
+.brand{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.06em;}
+.brand span{color:var(--red);}
+.logo-sub{font-size:9px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-top:1px;}
+.live-pill{display:flex;align-items:center;gap:5px;background:rgba(255,30,30,.1);border:1px solid rgba(255,30,30,.3);border-radius:20px;padding:4px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--red);}
+.dot{width:6px;height:6px;background:var(--red);border-radius:50%;animation:blink 1.2s step-start infinite;}
+@keyframes blink{50%{opacity:0;}}
+
+/* MAIN TABS */
+.main-tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
+.mtab{flex:1;padding:10px 0;border:none;background:transparent;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;font-family:'Noto Sans',sans-serif;}
+.mtab.active{color:var(--red);border-bottom-color:var(--red);}
+
+/* PAGES */
+.page-wrap{flex:1;overflow:hidden;position:relative;}
+.pg{display:none;height:100%;overflow-y:auto;overflow-x:hidden;padding:12px 14px;}
+.pg.active{display:block;}
+.pg::-webkit-scrollbar{width:3px;}.pg::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+@keyframes fadein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* LOC STRIP */
+.loc-strip{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:9px 13px;display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.loc-ic{width:28px;height:28px;background:rgba(255,140,0,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.loc-ic svg{width:14px;height:14px;fill:var(--amber);}
+.loc-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;}
+.loc-val{font-size:12px;font-weight:500;margin-top:1px;}
+.loc-coords{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-align:right;margin-left:auto;}
+
+/* UPLOAD CARD */
+.upload-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px;}
+.card-head{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.card-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);}
+.nearby-badge{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--amber);background:rgba(255,140,0,.1);border:1px solid rgba(255,140,0,.2);padding:2px 8px;border-radius:10px;}
+.upload-zone{margin:12px;border:2px dashed var(--border);border-radius:11px;padding:22px 16px;text-align:center;cursor:pointer;transition:all .2s;}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--red);background:rgba(255,30,30,.04);}
+.upload-zone.has-file{border-style:solid;border-color:var(--green);background:rgba(0,230,118,.04);}
+#file-input{display:none;}
+.up-icon{width:46px;height:46px;background:rgba(255,30,30,.1);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;transition:all .2s;}
+.upload-zone:hover .up-icon{background:rgba(255,30,30,.2);transform:scale(1.04);}
+.up-icon svg{width:22px;height:22px;}
+.up-title{font-size:14px;font-weight:600;margin-bottom:4px;}
+.up-sub{font-size:11px;color:var(--muted);line-height:1.5;}
+.fmt-row{display:flex;gap:5px;justify-content:center;margin-top:10px;}
+.fmt{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--muted);}
+#preview-wrap{display:none;margin:0 12px 12px;border-radius:9px;overflow:hidden;position:relative;}
+#preview-img{width:100%;max-height:170px;object-fit:cover;display:block;}
+.prev-ov{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 50%);display:flex;align-items:flex-end;padding:8px 10px;}
+.prev-fn{font-size:10px;color:rgba(255,255,255,.75);font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.prev-rm{position:absolute;top:7px;right:7px;width:24px;height:24px;background:rgba(0,0,0,.6);border:none;border-radius:50%;color:white;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;}
+
+/* TYPE GRID */
+.type-grid{padding:0 12px 12px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
+.tbtn{background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;padding:9px 5px;text-align:center;cursor:pointer;transition:all .15s;}
+.tbtn:hover{border-color:rgba(255,30,30,.5);}
+.tbtn.sel{border-color:var(--red);background:rgba(255,30,30,.1);}
+.t-emoji{font-size:18px;display:block;margin-bottom:3px;}
+.t-lbl{font-size:9px;color:var(--muted);line-height:1.3;font-weight:500;}
+.tbtn.sel .t-lbl{color:var(--text);}
+
+/* SEVERITY */
+.sev-wrap{padding:0 12px 12px;}
+.sev-hd{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:7px;}
+.sev-row{display:flex;gap:7px;}
+.sbtn{flex:1;padding:8px 4px;border-radius:7px;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;text-align:center;font-size:11px;font-weight:700;transition:all .15s;color:var(--muted);font-family:'Noto Sans',sans-serif;}
+.sbtn.low.sel{border-color:var(--green);background:rgba(0,230,118,.1);color:var(--green);}
+.sbtn.mid.sel{border-color:var(--amber);background:rgba(255,140,0,.1);color:var(--amber);}
+.sbtn.high.sel{border-color:var(--red);background:rgba(255,30,30,.1);color:var(--red);}
+
+/* DESC */
+.desc-wrap{padding:0 12px 12px;}
+.desc-input{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-family:'Noto Sans',sans-serif;font-size:12px;resize:none;height:58px;outline:none;transition:border-color .15s;}
+.desc-input:focus{border-color:rgba(255,30,30,.5);}
+.desc-input::placeholder{color:var(--muted);}
+
+/* SUBMIT */
+.sub-btn{margin:0 12px 12px;width:calc(100% - 24px);padding:14px;background:var(--red);border:none;border-radius:11px;color:white;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.15em;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.sub-btn:hover{background:#e01010;transform:translateY(-1px);box-shadow:0 8px 24px rgba(255,30,30,.35);}
+.sub-btn.loading{background:var(--surface2);color:var(--muted);cursor:not-allowed;transform:none;box-shadow:none;}
+.sub-btn svg{width:17px;height:17px;fill:white;}
+.spinner{display:none;width:15px;height:15px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* SERVICES */
+.svc-panel{display:none;margin-bottom:12px;animation:fadein .4s ease;}
+.svc-panel.show{display:block;}
+.svc-card{background:var(--surface);border:1px solid rgba(0,230,118,.3);border-radius:14px;overflow:hidden;}
+.svc-head{background:rgba(0,230,118,.07);padding:11px 14px;display:flex;align-items:center;gap:9px;border-bottom:1px solid rgba(0,230,118,.15);}
+.check-ring{width:26px;height:26px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.check-ring svg{width:13px;height:13px;}
+.svc-title{font-weight:700;font-size:13px;color:var(--green);}
+.svc-sub{font-size:10px;color:var(--muted);margin-top:1px;}
+.inc-id{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);background:var(--surface2);padding:2px 7px;border-radius:5px;border:1px solid var(--border);}
+.svc-list{padding:10px 14px;display:flex;flex-direction:column;gap:9px;}
+.svc-item{display:flex;align-items:center;gap:10px;}
+.svc-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.svc-icon.a{background:rgba(255,30,30,.12);} .svc-icon.p{background:rgba(30,100,255,.12);}
+.svc-name{font-size:12px;font-weight:600;} .svc-eta{font-size:10px;color:var(--muted);margin-top:1px;}
+.svc-status{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 7px;border-radius:20px;margin-left:auto;}
+.ss-d{background:rgba(0,230,118,.1);color:var(--green);border:1px solid rgba(0,230,118,.25);}
+.ss-e{background:rgba(255,140,0,.1);color:var(--amber);border:1px solid rgba(255,140,0,.25);}
+.eta-bar{margin-top:9px;background:var(--surface);border-radius:9px;padding:9px 13px;display:flex;align-items:center;gap:10px;border:1px solid var(--border);}
+.eta-val{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--amber);margin-left:auto;letter-spacing:.05em;}
+.prog-bar{height:3px;background:var(--border);border-radius:2px;margin-top:8px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--amber));border-radius:2px;animation:prog 8s linear forwards;width:0%;}
+@keyframes prog{to{width:35%;}}
+
+/* FEED */
+.feed-sec{margin-bottom:12px;}
+.feed-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.slbl{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);}
+.see-all{font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;font-family:'Noto Sans',sans-serif;}
+.feed{display:flex;flex-direction:column;gap:7px;}
+.fi{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:9px 11px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:border-color .15s;}
+.fi:hover{border-color:var(--red);}
+.fdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.fdot.h{background:var(--red);box-shadow:0 0 5px var(--red);} .fdot.m{background:var(--amber);} .fdot.l{background:var(--green);}
+.finfo{flex:1;min-width:0;} .ftype{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} .floc{font-size:10px;color:var(--muted);margin-top:1px;}
+.ftime{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);flex-shrink:0;}
+
+/* ══ CHAT PAGE ══ */
+#chat-pg{flex-direction:column;}
+#chat-pg.active{display:flex !important;}
+.chat-intro{background:linear-gradient(135deg,rgba(255,30,30,.08),rgba(30,144,255,.06));border-bottom:1px solid var(--border);padding:11px 14px;display:flex;align-items:center;gap:11px;flex-shrink:0;}
+.ai-av{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#FF1E1E,#FF8C00);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 14px rgba(255,30,30,.3);flex-shrink:0;}
+.ai-nm{font-weight:700;font-size:14px;} .ai-ds{font-size:10px;color:var(--muted);margin-top:2px;}
+.ai-online{display:flex;align-items:center;gap:4px;margin-left:auto;font-size:10px;color:var(--green);}
+.ao-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:blink 2s ease-in-out infinite;}
+
+.quick-chips{padding:9px 14px 0;display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;flex-shrink:0;}
+.quick-chips::-webkit-scrollbar{display:none;}
+.chip{white-space:nowrap;padding:6px 11px;background:var(--surface);border:1px solid var(--border);border-radius:20px;font-size:11px;color:var(--text);cursor:pointer;transition:all .15s;flex-shrink:0;font-family:'Noto Sans',sans-serif;}
+.chip:hover{border-color:var(--red);background:rgba(255,30,30,.07);color:var(--red);}
+
+.messages{flex:1;overflow-y:auto;padding:11px 14px;display:flex;flex-direction:column;gap:10px;}
+.messages::-webkit-scrollbar{width:3px;}.messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+.msg{display:flex;gap:8px;align-items:flex-end;animation:fadein .25s ease;}
+.msg.user{flex-direction:row-reverse;}
+.mavatar{width:30px;height:30px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.mavatar.ai{background:linear-gradient(135deg,#FF1E1E,#FF8C00);}
+.mavatar.usr{background:var(--surface2);border:1px solid var(--border);}
+.bubble{max-width:78%;padding:9px 12px;border-radius:13px;font-size:12.5px;line-height:1.55;}
+.msg.ai .bubble{background:var(--surface);border:1px solid var(--border);border-bottom-left-radius:4px;color:var(--text);}
+.msg.user .bubble{background:var(--red);border-bottom-right-radius:4px;color:white;}
+.mtime{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-top:3px;padding:0 4px;}
+.msg.user .mtime{text-align:right;}
+.typing-b{background:var(--surface);border:1px solid var(--border);border-radius:13px;border-bottom-left-radius:4px;padding:10px 14px;display:flex;gap:5px;align-items:center;}
+.td{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:typing 1.2s ease-in-out infinite;}
+.td:nth-child(2){animation-delay:.2s;} .td:nth-child(3){animation-delay:.4s;}
+@keyframes typing{0%,80%,100%{transform:scale(.8);opacity:.5;}40%{transform:scale(1);opacity:1;}}
+
+.chat-input-bar{padding:9px 14px 13px;border-top:1px solid var(--border);display:flex;gap:7px;align-items:flex-end;flex-shrink:0;background:var(--bg);}
+.chat-input{flex:1;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:9px 12px;color:var(--text);font-family:'Noto Sans',sans-serif;font-size:13px;resize:none;outline:none;transition:border-color .15s;max-height:100px;min-height:40px;overflow-y:auto;}
+.chat-input:focus{border-color:rgba(255,30,30,.5);}
+.chat-input::placeholder{color:var(--muted);}
+.chat-send{width:38px;height:38px;background:var(--red);border:none;border-radius:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0;}
+.chat-send:hover{background:#e01010;transform:scale(1.05);}
+.chat-send svg{width:16px;height:16px;fill:white;}
+.mic-btn{width:38px;height:38px;background:var(--surface);border:1.5px solid var(--border);border-radius:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0;font-size:17px;}
+.mic-btn:hover{border-color:var(--amber);}
+
+/* JAVA TAB */
+.java-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px;}
+.java-head{background:linear-gradient(135deg,#1a1a2e,#16213e);padding:14px;border-bottom:1px solid var(--border);}
+.java-head h3{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--amber);letter-spacing:.05em;margin-bottom:3px;}
+.java-head p{font-size:10px;color:var(--muted);}
+.code-blk{background:#0d1117;padding:13px 15px;font-family:'JetBrains Mono',monospace;font-size:10.5px;line-height:1.75;color:#c9d1d9;overflow-x:auto;}
+.kw{color:#ff7b72;} .cls{color:#79c0ff;} .cmt{color:#8b949e;}
+.arch-sec{padding:13px 15px;border-top:1px solid var(--border);}
+.arch-sec h4{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:10px;}
+.arch-item{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.arch-item:last-child{border-bottom:none;}
+.arch-num{width:22px;height:22px;background:rgba(255,30,30,.1);border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--red);flex-shrink:0;margin-top:1px;}
+.arch-text strong{display:block;font-size:12px;margin-bottom:2px;}
+.arch-text span{font-size:11px;color:var(--muted);}
+.tech-tags{padding:11px 15px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:5px;}
+.ttag{font-size:9px;padding:3px 7px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+
+/* SUCCESS OVERLAY */
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:100;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
+#overlay.show{display:flex;animation:fadein .3s ease;}
+.ok-ring{width:90px;height:90px;border:3px solid var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;animation:ring-in 1s ease;box-shadow:0 0 35px rgba(0,230,118,.4);}
+@keyframes ring-in{0%{transform:scale(.5);opacity:0;}70%{transform:scale(1.05);}100%{transform:scale(1);opacity:1;}}
+.ok-ring svg{width:40px;height:40px;fill:var(--green);}
+.ok-txt{text-align:center;animation:fadein .5s ease .3s both;}
+.ok-txt h2{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.1em;color:var(--green);margin-bottom:5px;}
+.ok-txt p{font-size:12px;color:var(--muted);}
+.ok-close{margin-top:6px;padding:9px 26px;background:transparent;border:1.5px solid var(--border);border-radius:8px;color:var(--muted);font-family:'Noto Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;}
+.ok-close:hover{border-color:var(--green);color:var(--green);}
+
+/* NAV */
+.nav{display:flex;background:var(--surface);border-top:1px solid var(--border);padding:8px 0 15px;flex-shrink:0;}
+.nit{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:3px 0;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.08em;transition:color .15s;}
+.nit.active{color:var(--red);}
+.nit svg{width:19px;height:19px;fill:currentColor;}
+.nbadge{position:absolute;top:-2px;right:-5px;width:8px;height:8px;background:var(--red);border-radius:50%;border:1.5px solid var(--surface);display:none;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- LANGUAGE BAR -->
+  <div class="lang-bar">
+    <button class="lang-btn active" onclick="setLang('en')">🇬🇧 English</button>
+    <button class="lang-btn" onclick="setLang('hi')">🇮🇳 हिंदी</button>
+    <button class="lang-btn" onclick="setLang('ta')">தமிழ்</button>
+    <button class="lang-btn" onclick="setLang('te')">తెలుగు</button>
+  </div>
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div>
+      <div><div class="brand">Road<span>Risk</span>Live</div><div class="logo-sub" id="h-sub">Emergency Response System</div></div>
+    </div>
+    <div class="live-pill"><div class="dot"></div><span>LIVE</span></div>
+  </header>
+
+  <!-- MAIN TABS -->
+  <div class="main-tabs">
+    <button class="mtab active" onclick="showPg('report')" id="mtab-report" data-key="tab_report">📷 Report</button>
+    <button class="mtab" onclick="showPg('chat')" id="mtab-chat" data-key="tab_chat">🤖 AI Help</button>
+    <button class="mtab" onclick="showPg('arch')" id="mtab-arch" data-key="tab_arch">☕ Java</button>
+  </div>
+
+  <!-- PAGES WRAPPER -->
+  <div class="page-wrap">
+
+    <!-- REPORT PAGE -->
+    <div class="pg active" id="report-pg">
+      <div class="loc-strip">
+        <div class="loc-ic"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div>
+        <div><div class="loc-lbl" data-key="gps_loc">GPS Location</div><div class="loc-val" id="loc-text">Fetching…</div></div>
+        <div class="loc-coords" id="loc-coords">—</div>
+      </div>
+
+      <div class="upload-card">
+        <div class="card-head">
+          <span class="card-lbl" data-key="upload_media">Upload Incident Media</span>
+          <span class="nearby-badge">3 <span data-key="nearby">nearby</span></span>
+        </div>
+        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+          <input type="file" id="file-input" accept="image/*,video/*" onchange="handleFile(event)">
+          <div class="up-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#FF1E1E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></div>
+          <div class="up-title" data-key="tap_upload">Tap to capture / upload</div>
+          <div class="up-sub" data-key="up_sub">Take a photo or video of the accident<br>for emergency services analysis</div>
+          <div class="fmt-row"><span class="fmt">JPG</span><span class="fmt">PNG</span><span class="fmt">MP4</span><span class="fmt">MOV</span></div>
+        </div>
+        <div id="preview-wrap"><img id="preview-img" src="" alt=""><div class="prev-ov"><span class="prev-fn" id="prev-fn"></span></div><button class="prev-rm" onclick="removeFile()">✕</button></div>
+
+        <div class="type-grid">
+          <div class="tbtn sel" onclick="selType(this)"><span class="t-emoji">🚗</span><span class="t-lbl" data-key="t1">Vehicle Collision</span></div>
+          <div class="tbtn" onclick="selType(this)"><span class="t-emoji">🚑</span><span class="t-lbl" data-key="t2">Medical Emergency</span></div>
+          <div class="tbtn" onclick="selType(this)"><span class="t-emoji">🔥</span><span class="t-lbl" data-key="t3">Fire / Hazard</span></div>
+          <div class="tbtn" onclick="selType(this)"><span class="t-emoji">🏍️</span><span class="t-lbl" data-key="t4">Motorbike Crash</span></div>
+          <div class="tbtn" onclick="selType(this)"><span class="t-emoji">🚌</span><span class="t-lbl" data-key="t5">Large Vehicle</span></div>
+          <div class="tbtn" onclick="selType(this)"><span class="t-emoji">⚠️</span><span class="t-lbl" data-key="t6">Road Hazard</span></div>
+        </div>
+
+        <div class="sev-wrap">
+          <div class="sev-hd" data-key="severity">Severity Level</div>
+          <div class="sev-row">
+            <div class="sbtn low" onclick="selSev(this)" data-key="sev_low">LOW</div>
+            <div class="sbtn mid sel" onclick="selSev(this)" data-key="sev_med">MEDIUM</div>
+            <div class="sbtn high" onclick="selSev(this)" data-key="sev_crit">CRITICAL</div>
+          </div>
+        </div>
+
+        <div class="desc-wrap">
+          <textarea class="desc-input" id="desc-txt" placeholder="Describe what happened (optional)…" data-key-ph="desc_ph"></textarea>
+        </div>
+
+        <button class="sub-btn" id="sub-btn" onclick="submitReport()">
+          <svg viewBox="0 0 24 24"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.12-.56-2.32-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.68 10.32 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>
+          <span id="btn-txt" data-key="alert_btn">ALERT EMERGENCY SERVICES</span>
+          <div class="spinner" id="spinner"></div>
+        </button>
+      </div>
+
+      <div class="svc-panel" id="svc-panel">
+        <div class="svc-card">
+          <div class="svc-head">
+            <div class="check-ring"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="#080810"/></svg></div>
+            <div><div class="svc-title" data-key="dispatched">Services Dispatched</div><div class="svc-sub" data-key="teams_notified">Emergency teams notified and en route</div></div>
+            <div class="inc-id" id="inc-id">—</div>
+          </div>
+          <div class="svc-list">
+            <div class="svc-item"><div class="svc-icon a">🚑</div><div><div class="svc-name" data-key="amb">Ambulance A-4</div><div class="svc-eta" data-key="amb_eta">ETA 6 min · 2.1 km</div></div><div class="svc-status ss-d" data-key="dispatched_s">DISPATCHED</div></div>
+            <div class="svc-item"><div class="svc-icon p">🚔</div><div><div class="svc-name" data-key="pol">Police P-12</div><div class="svc-eta" data-key="pol_eta">ETA 4 min · 1.4 km</div></div><div class="svc-status ss-e" data-key="enroute_s">EN ROUTE</div></div>
+          </div>
+        </div>
+        <div class="eta-bar" style="margin-top:9px">
+          <div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em" data-key="first_eta">First Responder ETA</div></div>
+          <div class="eta-val" id="eta-cd">4:00</div>
+          <div style="font-size:10px;color:var(--muted)">min</div>
+        </div>
+        <div class="prog-bar"><div class="prog-fill"></div></div>
+      </div>
+
+      <div class="feed-sec">
+        <div class="feed-hd"><span class="slbl" data-key="nearby_inc">Nearby Incidents</span><button class="see-all" data-key="see_all">See All →</button></div>
+        <div class="feed">
+          <div class="fi"><div class="fdot h"></div><div class="finfo"><div class="ftype">🚗 <span data-key="fi1">Multi-vehicle collision</span></div><div class="floc">MG Road · 0.4 km</div></div><div class="ftime">2m</div></div>
+          <div class="fi"><div class="fdot m"></div><div class="finfo"><div class="ftype">🏍️ <span data-key="fi2">Motorbike crash</span></div><div class="floc">Ring Road · 1.1 km</div></div><div class="ftime">11m</div></div>
+          <div class="fi"><div class="fdot l"></div><div class="finfo"><div class="ftype">⚠️ <span data-key="fi3">Debris on road</span></div><div class="floc">NH-48 · 2.3 km</div></div><div class="ftime">22m</div></div>
+        </div>
+      </div>
+    </div><!-- /report-pg -->
+
+    <!-- CHAT PAGE -->
+    <div class="pg" id="chat-pg" style="padding:0;display:flex;flex-direction:column;height:100%;">
+      <div class="chat-intro">
+        <div class="ai-av">🤖</div>
+        <div><div class="ai-nm" data-key="ai_name">Raksha AI</div><div class="ai-ds" data-key="ai_desc">Emergency Assistant · Multilingual</div></div>
+        <div class="ai-online"><div class="ao-dot"></div><span data-key="online">Online</span></div>
+      </div>
+      <div class="quick-chips" id="quick-chips">
+        <div class="chip" onclick="sendChip(this,'q1')" data-key="q1">🚨 Report accident</div>
+        <div class="chip" onclick="sendChip(this,'q2')" data-key="q2">🏥 Nearest hospital</div>
+        <div class="chip" onclick="sendChip(this,'q3')" data-key="q3">📞 Emergency numbers</div>
+        <div class="chip" onclick="sendChip(this,'q4')" data-key="q4">🛡️ What to do now?</div>
+        <div class="chip" onclick="sendChip(this,'q5')" data-key="q5">🩹 First aid tips</div>
+      </div>
+      <div class="messages" id="messages"></div>
+      <div class="chat-input-bar">
+        <div class="mic-btn" title="Voice">🎙️</div>
+        <textarea class="chat-input" id="chat-input" rows="1" placeholder="Type your message…" data-key-ph="chat_ph"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}"
+          oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
+        <button class="chat-send" onclick="sendMsg()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+      </div>
+    </div><!-- /chat-pg -->
+
+    <!-- JAVA PAGE -->
+    <div class="pg" id="arch-pg">
+      <div class="java-card">
+        <div class="java-head"><h3>☕ Java Architecture</h3><p>RoadRiskLive · Android + Spring Boot Backend</p></div>
+        <div class="code-blk">
+<span class="cmt">// MainActivity.java</span>
+<span class="kw">public class</span> <span class="cls">MainActivity</span> <span class="kw">extends</span> <span class="cls">AppCompatActivity</span> {
+
+  <span class="kw">private void</span> <span class="cls">captureMedia</span>() {
+    <span class="cls">Intent</span> i = <span class="kw">new</span> <span class="cls">Intent</span>(
+      <span class="cls">MediaStore</span>.ACTION_IMAGE_CAPTURE);
+    cameraLauncher.launch(i);
+  }
+
+  <span class="kw">private void</span> <span class="cls">uploadAndAlert</span>() {
+    <span class="cls">EmergencyRequest</span> req =
+      <span class="kw">new</span> <span class="cls">EmergencyRequest</span>();
+    req.setMediaUri(mediaUri);
+    req.setLocation(getGPS());
+    req.setLanguage(currentLang); <span class="cmt">// hi/ta/te/en</span>
+    req.setSeverity(severity);
+    <span class="cls">ApiService</span>.dispatch(req, cb);
+  }
+}</div>
+        <div class="arch-sec">
+          <h4>System Architecture</h4>
+          <div class="arch-item"><div class="arch-num">1</div><div class="arch-text"><strong>Android Frontend (Java)</strong><span>CameraX capture · FusedLocationProvider GPS · Retrofit2 API · Multilingual UI (hi/ta/te/en) · Multipart upload</span></div></div>
+          <div class="arch-item"><div class="arch-num">2</div><div class="arch-text"><strong>Spring Boot Backend (Java)</strong><span>REST API · AWS S3 media · PostgreSQL + PostGIS · JWT auth · Role-based access for responders</span></div></div>
+          <div class="arch-item"><div class="arch-num">3</div><div class="arch-text"><strong>AI Layer (Raksha AI)</strong><span>Claude API for multilingual chatbot · Google Vision auto-detects severity · NLP in Hindi, Tamil, Telugu, English</span></div></div>
+          <div class="arch-item"><div class="arch-num">4</div><div class="arch-text"><strong>Emergency Dispatch</strong><span>Twilio SMS/voice in local language · FCM push · Auto-calls 108/100/101 by severity score</span></div></div>
+          <div class="arch-item"><div class="arch-num">5</div><div class="arch-text"><strong>Real-time Tracking</strong><span>Spring WebSocket + STOMP · Responder GPS stream · Live ETA countdown · Crowd-sourced feed</span></div></div>
+        </div>
+        <div class="tech-tags">
+          <span class="ttag">Java 17</span><span class="ttag">Android SDK 34</span><span class="ttag">Spring Boot 3</span><span class="ttag">CameraX</span><span class="ttag">Retrofit 2</span><span class="ttag">Firebase FCM</span><span class="ttag">Twilio</span><span class="ttag">Claude API</span><span class="ttag">PostgreSQL</span><span class="ttag">AWS S3</span><span class="ttag">Google Vision</span><span class="ttag">WebSocket</span>
+        </div>
+      </div>
+    </div><!-- /arch-pg -->
+
+  </div><!-- /page-wrap -->
+
+  <!-- NAV -->
+  <div class="nav">
+    <div class="nit active" onclick="showPg('report')" id="nav-report">
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span data-key="nav_report">Report</span>
+    </div>
+    <div class="nit" onclick="showPg('chat')" id="nav-chat" style="position:relative">
+      <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+      <div class="nbadge" id="nbadge"></div>
+      <span data-key="nav_chat">AI Help</span>
+    </div>
+    <div class="nit" onclick="showPg('map')"><svg viewBox="0 0 24 24"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5z"/></svg><span data-key="nav_map">Map</span></div>
+    <div class="nit" onclick="showPg('profile')"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg><span data-key="nav_profile">Profile</span></div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- OVERLAY -->
+<div id="overlay">
+  <div class="ok-ring"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
+  <div class="ok-txt"><h2 data-key="ok_h">REPORT SENT</h2><p data-key="ok_p">Emergency services have been alerted.<br>Help is on the way.</p></div>
+  <button class="ok-close" onclick="dismissOK()" data-key="track_btn">Track Responders →</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// TRANSLATIONS
+// ══════════════════════════════════════════════
+const T = {
+en:{
+  tab_report:"📷 Report",tab_chat:"🤖 AI Help",tab_arch:"☕ Java",h_sub:"Emergency Response System",
+  gps_loc:"GPS Location",upload_media:"Upload Incident Media",nearby:"nearby",
+  tap_upload:"Tap to capture / upload",up_sub:"Take a photo or video of the accident<br>for emergency services analysis",
+  t1:"Vehicle Collision",t2:"Medical Emergency",t3:"Fire / Hazard",t4:"Motorbike Crash",t5:"Large Vehicle",t6:"Road Hazard",
+  severity:"Severity Level",sev_low:"LOW",sev_med:"MEDIUM",sev_crit:"CRITICAL",
+  desc_ph:"Describe what happened (optional)…",alert_btn:"ALERT EMERGENCY SERVICES",
+  dispatched:"Services Dispatched",teams_notified:"Emergency teams notified and en route",
+  amb:"Ambulance A-4",amb_eta:"ETA 6 min · 2.1 km",pol:"Police P-12",pol_eta:"ETA 4 min · 1.4 km",
+  dispatched_s:"DISPATCHED",enroute_s:"EN ROUTE",first_eta:"First Responder ETA",
+  nearby_inc:"Nearby Incidents",see_all:"See All →",
+  fi1:"Multi-vehicle collision",fi2:"Motorbike crash",fi3:"Debris on road",
+  ai_name:"Raksha AI",ai_desc:"Emergency Assistant · Multilingual",online:"Online",
+  q1:"🚨 Report accident",q2:"🏥 Nearest hospital",q3:"📞 Emergency numbers",q4:"🛡️ What to do now?",q5:"🩹 First aid tips",
+  chat_ph:"Type your message…",
+  nav_report:"Report",nav_chat:"AI Help",nav_map:"Map",nav_profile:"Profile",
+  ok_h:"REPORT SENT",ok_p:"Emergency services have been alerted.<br>Help is on the way.",track_btn:"Track Responders →",
+  welcome:"Hello! I'm <strong>Raksha AI</strong> 🤖 — your emergency road assistant.<br><br>I can help you <strong>report accidents</strong>, find the <strong>nearest hospital</strong>, guide you with <strong>first aid</strong>, or connect to <strong>emergency services</strong>.<br><br>You can speak to me in English, हिंदी, தமிழ் or తెలుగు. How can I help you right now?"
+},
+hi:{
+  tab_report:"📷 रिपोर्ट",tab_chat:"🤖 AI सहायता",tab_arch:"☕ Java",h_sub:"आपातकालीन प्रतिक्रिया प्रणाली",
+  gps_loc:"GPS स्थान",upload_media:"दुर्घटना मीडिया अपलोड करें",nearby:"पास में",
+  tap_upload:"फोटो/वीडियो के लिए टैप करें",up_sub:"आपातकालीन सेवाओं के लिए दुर्घटना की<br>फोटो या वीडियो अपलोड करें",
+  t1:"वाहन टक्कर",t2:"चिकित्सा आपातकाल",t3:"आग / खतरा",t4:"मोटरबाइक दुर्घटना",t5:"बड़ा वाहन",t6:"सड़क खतरा",
+  severity:"गंभीरता स्तर",sev_low:"कम",sev_med:"मध्यम",sev_crit:"गंभीर",
+  desc_ph:"क्या हुआ बताएं (वैकल्पिक)…",alert_btn:"आपातकालीन सेवाएं सूचित करें",
+  dispatched:"सेवाएं भेजी गईं",teams_notified:"आपातकालीन दल सूचित और रास्ते में",
+  amb:"एम्बुलेंस A-4",amb_eta:"ETA 6 मिनट · 2.1 किमी",pol:"पुलिस P-12",pol_eta:"ETA 4 मिनट · 1.4 किमी",
+  dispatched_s:"भेजा गया",enroute_s:"रास्ते में",first_eta:"प्रथम प्रत्युत्तरकर्ता ETA",
+  nearby_inc:"पास की घटनाएं",see_all:"सभी देखें →",
+  fi1:"बहु-वाहन टक्कर",fi2:"मोटरबाइक दुर्घटना",fi3:"सड़क पर मलबा",
+  ai_name:"रक्षा AI",ai_desc:"आपातकालीन सहायक · बहुभाषी",online:"ऑनलाइन",
+  q1:"🚨 दुर्घटना रिपोर्ट",q2:"🏥 निकटतम अस्पताल",q3:"📞 आपातकालीन नंबर",q4:"🛡️ अभी क्या करें?",q5:"🩹 प्राथमिक उपचार",
+  chat_ph:"संदेश लिखें…",
+  nav_report:"रिपोर्ट",nav_chat:"AI सहायता",nav_map:"नक्शा",nav_profile:"प्रोफाइल",
+  ok_h:"रिपोर्ट भेजी गई",ok_p:"आपातकालीन सेवाएं सूचित की गई हैं।<br>सहायता आ रही है।",track_btn:"ट्रैक करें →",
+  welcome:"नमस्ते! मैं <strong>रक्षा AI</strong> 🤖 हूं।<br><br>मैं आपकी <strong>दुर्घटना रिपोर्ट</strong> करने, <strong>अस्पताल</strong> खोजने, <strong>प्राथमिक उपचार</strong> मार्गदर्शन देने या <strong>आपातकालीन सेवाओं</strong> से जोड़ने में मदद कर सकता हूं।<br><br>आप हिंदी, English, தமிழ் या తెలుగు में बात कर सकते हैं। अभी कैसे मदद करूं?"
+},
+ta:{
+  tab_report:"📷 புகார்",tab_chat:"🤖 AI உதவி",tab_arch:"☕ Java",h_sub:"அவசர நிவாரண அமைப்பு",
+  gps_loc:"GPS இடம்",upload_media:"விபத்து ஊடகம் பதிவேற்றவும்",nearby:"அருகில்",
+  tap_upload:"புகைப்படம்/வீடியோ எடுக்க தட்டவும்",up_sub:"அவசர சேவைகளுக்கு விபத்தின்<br>புகைப்படம் அல்லது வீடியோ எடுக்கவும்",
+  t1:"வாகன மோதல்",t2:"மருத்துவ அவசரநிலை",t3:"தீ / ஆபத்து",t4:"மோட்டார்சைக்கிள் விபத்து",t5:"பெரிய வாகனம்",t6:"சாலை ஆபத்து",
+  severity:"தீவிர நிலை",sev_low:"குறைந்த",sev_med:"நடுத்தரம்",sev_crit:"தீவிரம்",
+  desc_ph:"என்ன நடந்தது என்று விவரிக்கவும் (விருப்பத்தேர்வு)…",alert_btn:"அவசர சேவைகளுக்கு எச்சரிக்கை",
+  dispatched:"சேவைகள் அனுப்பப்பட்டன",teams_notified:"அவசர குழுக்கள் அறிவிக்கப்பட்டு வருகின்றன",
+  amb:"ஆம்புலன்ஸ் A-4",amb_eta:"ETA 6 நிமிடம் · 2.1 கி.மீ",pol:"காவல் P-12",pol_eta:"ETA 4 நிமிடம் · 1.4 கி.மீ",
+  dispatched_s:"அனுப்பப்பட்டது",enroute_s:"வழியில்",first_eta:"முதல் பதிலளிப்பாளர் ETA",
+  nearby_inc:"அருகில் உள்ள சம்பவங்கள்",see_all:"அனைத்தும் காண →",
+  fi1:"பல வாகன மோதல்",fi2:"மோட்டார்சைக்கிள் விபத்து",fi3:"சாலையில் குப்பை",
+  ai_name:"ரக்ஷா AI",ai_desc:"அவசர உதவியாளர் · பல மொழி",online:"இணையத்தில் உள்ளது",
+  q1:"🚨 விபத்தை புகார்",q2:"🏥 நெருங்கிய மருத்துவமனை",q3:"📞 அவசர எண்கள்",q4:"🛡️ இப்போது என்ன செய்வது?",q5:"🩹 முதலுதவி குறிப்புகள்",
+  chat_ph:"உங்கள் செய்தியை தட்டச்சு செய்யுங்கள்…",
+  nav_report:"புகார்",nav_chat:"AI உதவி",nav_map:"வரைபடம்",nav_profile:"சுயவிவரம்",
+  ok_h:"புகார் அனுப்பப்பட்டது",ok_p:"அவசர சேவைகள் அறிவிக்கப்பட்டன.<br>உதவி வருகிறது.",track_btn:"கண்காணி →",
+  welcome:"வணக்கம்! நான் <strong>ரக்ஷா AI</strong> 🤖 — உங்கள் அவசர சாலை உதவியாளர்.<br><br><strong>விபத்தை புகார்</strong> செய்வது, <strong>மருத்துவமனை</strong> கண்டுபிடிப்பது, <strong>முதலுதவி</strong> வழிகாட்டுவது ஆகியவற்றில் உதவ முடியும்.<br><br>தமிழ், English, हिंदी, తెలుగు-ல் பேசலாம். எப்படி உதவட்டும்?"
+},
+te:{
+  tab_report:"📷 నివేదిక",tab_chat:"🤖 AI సహాయం",tab_arch:"☕ Java",h_sub:"అత్యవసర ప్రతిస్పందన వ్యవస్థ",
+  gps_loc:"GPS స్థానం",upload_media:"ప్రమాద మీడియా అప్‌లోడ్ చేయండి",nearby:"సమీపంలో",
+  tap_upload:"ఫోటో/వీడియో తీయడానికి నొక్కండి",up_sub:"అత్యవసర సేవలకు ప్రమాదం యొక్క<br>ఫోటో లేదా వీడియో తీయండి",
+  t1:"వాహన ఢీకొనడం",t2:"వైద్య అత్యవసరం",t3:"మంట / ప్రమాదం",t4:"మోటార్‌బైక్ ప్రమాదం",t5:"పెద్ద వాహనం",t6:"రోడ్డు ప్రమాదం",
+  severity:"తీవ్రత స్థాయి",sev_low:"తక్కువ",sev_med:"మధ్యమం",sev_crit:"తీవ్రమైన",
+  desc_ph:"ఏం జరిగిందో వివరించండి (ఐచ్ఛికం)…",alert_btn:"అత్యవసర సేవలకు హెచ్చరించండి",
+  dispatched:"సేవలు పంపబడ్డాయి",teams_notified:"అత్యవసర బృందాలు తెలియజేయబడ్డాయి",
+  amb:"అంబులెన్స్ A-4",amb_eta:"ETA 6 నిమి · 2.1 కి.మీ",pol:"పోలీస్ P-12",pol_eta:"ETA 4 నిమి · 1.4 కి.మీ",
+  dispatched_s:"పంపబడింది",enroute_s:"దారిలో ఉంది",first_eta:"మొదటి స్పందనదారు ETA",
+  nearby_inc:"సమీప సంఘటనలు",see_all:"అన్నీ చూడండి →",
+  fi1:"బహు వాహన ఢీకొనడం",fi2:"మోటార్‌బైక్ ప్రమాదం",fi3:"రోడ్డుపై శిథిలాలు",
+  ai_name:"రక్ష AI",ai_desc:"అత్యవసర సహాయకుడు · బహుభాషా",online:"ఆన్‌లైన్‌లో ఉంది",
+  q1:"🚨 ప్రమాదం నివేదించండి",q2:"🏥 సమీప ఆసుపత్రి",q3:"📞 అత్యవసర నంబర్లు",q4:"🛡️ ఇప్పుడు ఏం చేయాలి?",q5:"🩹 ప్రాథమిక చికిత్స",
+  chat_ph:"మీ సందేశాన్ని టైప్ చేయండి…",
+  nav_report:"నివేదిక",nav_chat:"AI సహాయం",nav_map:"మ్యాప్",nav_profile:"ప్రొఫైల్",
+  ok_h:"నివేదిక పంపబడింది",ok_p:"అత్యవసర సేవలు హెచ్చరించబడ్డాయి.<br>సహాయం వస్తోంది.",track_btn:"ట్రాక్ చేయండి →",
+  welcome:"నమస్కారం! నేను <strong>రక్ష AI</strong> 🤖 — మీ అత్యవసర రోడ్డు సహాయకుడు.<br><br><strong>ప్రమాదం నివేదించడం</strong>, <strong>ఆసుపత్రి</strong> కనుగొనడం, <strong>ప్రాథమిక చికిత్స</strong> మార్గదర్శనం ఆకియవాటిలో సహాయం చేయగలను.<br><br>తెలుగు, English, हिंदी, தமிழ్‌లో మాట్లాడవచ్చు. ఇప్పుడు ఎలా సహాయం చేయాలి?"
+}};
+
+// ══ AI RESPONSE BANKS ══
+const RESP = {
+en:{
+  "report":   "To report an accident:\n1️⃣ Stay safe — move away from traffic\n2️⃣ Use the 📷 Report tab to upload a photo/video\n3️⃣ Select incident type and severity\n4️⃣ Tap 'Alert Emergency Services'\n\nPolice + ambulance are dispatched automatically. You can also directly call <strong>112</strong> (National Emergency).",
+  "hospital": "📍 Nearest hospitals based on your GPS:\n• Apollo Hospital — ~2.1 km\n• AIIMS Emergency — ~3.4 km\n• Fortis Hospital — ~4.2 km\n\nTap the 🗺️ Map tab for live navigation to any of these.",
+  "emergency":"Emergency Numbers India 🇮🇳\n🚑 Ambulance: <strong>108</strong>\n🚔 Police: <strong>100</strong>\n🔥 Fire: <strong>101</strong>\n📞 National Emergency: <strong>112</strong>\n🏥 Women Helpline: 1091\n🛣️ Highway Helpline: 1033\n\nAll these are free calls, 24/7.",
+  "what":     "Immediate Steps After Accident:\n1️⃣ Ensure your own safety first\n2️⃣ Call 112 immediately\n3️⃣ Don't move injured persons (unless fire risk)\n4️⃣ Turn on hazard lights\n5️⃣ Upload photo/video via this app\n6️⃣ Keep witnesses nearby\n7️⃣ Don't leave the scene until police arrive",
+  "first aid":"Basic First Aid:\n🩸 Bleeding — Apply firm pressure with clean cloth\n💨 Not breathing — Start CPR (30 compressions, 2 breaths)\n🦴 Fracture — Immobilize, do not move\n🔥 Burns — Cool with running water (not ice)\n😵 Unconscious — Recovery position (on their side)\n\n⚠️ Always call <strong>108</strong> for professional help!"
+},
+hi:{
+  "report":   "दुर्घटना रिपोर्ट करने के लिए:\n1️⃣ सुरक्षित स्थान पर जाएं\n2️⃣ 📷 रिपोर्ट टैब से फोटो/वीडियो अपलोड करें\n3️⃣ घटना प्रकार और गंभीरता चुनें\n4️⃣ 'आपातकालीन सेवाएं सूचित करें' दबाएं\n\nपुलिस और एम्बुलेंस स्वचालित रूप से आएगी। आप सीधे <strong>112</strong> भी कॉल कर सकते हैं।",
+  "hospital": "📍 आपके GPS के अनुसार निकटतम अस्पताल:\n• Apollo Hospital — ~2.1 किमी\n• AIIMS — ~3.4 किमी\n• Safdarjung — ~4.0 किमी\n\n🗺️ नक्शा टैब पर नेविगेशन देखें।",
+  "emergency":"आपातकालीन नंबर 🇮🇳\n🚑 एम्बुलेंस: <strong>108</strong>\n🚔 पुलिस: <strong>100</strong>\n🔥 दमकल: <strong>101</strong>\n📞 राष्ट्रीय आपातकाल: <strong>112</strong>\n🏥 महिला हेल्पलाइन: 1091\n🛣️ हाईवे हेल्पलाइन: 1033",
+  "what":     "दुर्घटना के बाद तुरंत करें:\n1️⃣ खुद को सुरक्षित रखें\n2️⃣ तुरंत 112 कॉल करें\n3️⃣ घायल को हिलाएं नहीं\n4️⃣ हैजार्ड लाइट चालू करें\n5️⃣ इस ऐप से फोटो/वीडियो अपलोड करें\n6️⃣ गवाहों को पास रखें",
+  "first aid":"प्राथमिक उपचार:\n🩸 रक्तस्राव — कपड़े से दबाव दें\n💨 सांस नहीं — CPR दें\n🦴 फ्रैक्चर — हिलाएं नहीं\n🔥 जलन — पानी से ठंडा करें\n😵 बेहोश — करवट पर लिटाएं\n\n⚠️ <strong>108</strong> जरूर कॉल करें!"
+},
+ta:{
+  "report":   "விபத்தை புகார் செய்ய:\n1️⃣ பாதுகாப்பான இடத்திற்கு செல்லுங்கள்\n2️⃣ 📷 புகார் தாவலில் புகைப்படம்/வீடியோ பதிவேற்றவும்\n3️⃣ சம்பவ வகை மற்றும் தீவிரத்தை தேர்ந்தெடுக்கவும்\n4️⃣ 'அவசர சேவைகளுக்கு எச்சரிக்கை' தட்டவும்\n\nநேரடியாக <strong>112</strong> அழைக்கவும்.",
+  "hospital": "📍 உங்கள் GPS அடிப்படையில்:\n• Government General Hospital — ~1.8 கி.மீ\n• Apollo Hospital — ~2.5 கி.மீ\n• Fortis — ~3.1 கி.மீ\n\n🗺️ வரைபட தாவலில் வழிசெலுத்தலை காணவும்.",
+  "emergency":"அவசர எண்கள் 🇮🇳\n🚑 ஆம்புலன்ஸ்: <strong>108</strong>\n🚔 காவல்துறை: <strong>100</strong>\n🔥 தீயணைப்பு: <strong>101</strong>\n📞 தேசிய அவசரநிலை: <strong>112</strong>\n🏥 மகளிர் உதவி: 1091\n🛣️ நெடுஞ்சாலை: 1033",
+  "what":     "உடனடி நடவடிக்கைகள்:\n1️⃣ உங்கள் பாதுகாப்பை உறுதி செய்யுங்கள்\n2️⃣ உடனே 112 அழைக்கவும்\n3️⃣ காயமடைந்தவர்களை நகர்த்தாதீர்கள்\n4️⃣ ஆபத்து விளக்குகளை இயக்கவும்\n5️⃣ இந்த ஆப்பில் மீடியா பதிவேற்றவும்",
+  "first aid":"முதலுதவி:\n🩸 இரத்தப்போக்கு — துணியால் அழுத்தம் கொடுங்கள்\n💨 சுவாசிக்கவில்லை — CPR கொடுங்கள்\n🦴 எலும்பு முறிவு — நகர்த்தாதீர்கள்\n🔥 தீக்காயம் — நீரால் குளிர்விக்கவும்\n\n⚠️ <strong>108</strong> அழைக்கவும்!"
+},
+te:{
+  "report":   "ప్రమాదాన్ని నివేదించడానికి:\n1️⃣ సురక్షిత స్థానానికి వెళ్ళండి\n2️⃣ 📷 నివేదిక టాబ్‌లో ఫోటో/వీడియో అప్‌లోడ్ చేయండి\n3️⃣ సంఘటన రకం మరియు తీవ్రత ఎంచుకోండి\n4️⃣ 'అత్యవసర సేవలకు హెచ్చరించండి' నొక్కండి\n\nనేరుగా <strong>112</strong> కు కాల్ చేయవచ్చు.",
+  "hospital": "📍 మీ GPS ఆధారంగా:\n• NIMS — ~1.5 కి.మీ\n• Apollo — ~2.3 కి.మీ\n• Yashoda — ~3.0 కి.మీ\n\n🗺️ మ్యాప్ టాబ్‌లో నావిగేషన్ చూడండి.",
+  "emergency":"అత్యవసర నంబర్లు 🇮🇳\n🚑 అంబులెన్స్: <strong>108</strong>\n🚔 పోలీస్: <strong>100</strong>\n🔥 అగ్నిమాపక: <strong>101</strong>\n📞 జాతీయ అత్యవసరం: <strong>112</strong>\n🏥 మహిళా హెల్ప్‌లైన్: 1091\n🛣️ హైవే హెల్ప్‌లైన్: 1033",
+  "what":     "తక్షణ చర్యలు:\n1️⃣ మీ స్వంత భద్రత నిర్ధారించుకోండి\n2️⃣ వెంటనే 112 కు కాల్ చేయండి\n3️⃣ గాయపడినవారిని కదిలించకండి\n4️⃣ హజార్డ్ లైట్లు వేయండి\n5️⃣ ఈ యాప్‌లో మీడియా అప్‌లోడ్ చేయండి",
+  "first aid":"ప్రాథమిక చికిత్స:\n🩸 రక్తస్రావం — గుడ్డతో ఒత్తిడి వేయండి\n💨 శ్వాస లేదు — CPR ఇవ్వండి\n🦴 ఎముక విరుపు — కదిలించకండి\n🔥 కాలిన గాయాలు — నీటితో చల్లార్చండి\n\n⚠️ <strong>108</strong> కు కాల్ చేయండి!"
+}};
+
+// chip key → response key
+const CHIP_RESP = {q1:"report",q2:"hospital",q3:"emergency",q4:"what",q5:"first aid"};
+
+// ══════════════════════
+// STATE
+// ══════════════════════
+let lang='en', chatReady=false, submitted=false;
+
+// ══════════════════════
+// INIT
+// ══════════════════════
+if(navigator.geolocation){
+  navigator.geolocation.getCurrentPosition(p=>{
+    document.getElementById('loc-text').textContent='GPS Located';
+    document.getElementById('loc-coords').textContent=`${p.coords.latitude.toFixed(4)}, ${p.coords.longitude.toFixed(4)}`;
+  },()=>{document.getElementById('loc-text').textContent='New Delhi, IN';document.getElementById('loc-coords').textContent='28.6139, 77.2090';});
+}else{document.getElementById('loc-text').textContent='New Delhi, IN';document.getElementById('loc-coords').textContent='28.6139, 77.2090';}
+
+// Show badge after 2s
+setTimeout(()=>{if(document.getElementById('chat-pg').style.display!=='flex')document.getElementById('nbadge').style.display='block';},2000);
+
+// ══════════════════════
+// LANGUAGE
+// ══════════════════════
+function setLang(l){
+  lang=l;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`.lang-btn[onclick="setLang('${l}')"]`).classList.add('active');
+  applyT();
+  if(chatReady){document.getElementById('messages').innerHTML='';addAI(T[lang].welcome);}
+}
+
+function applyT(){
+  const t=T[lang];
+  document.querySelectorAll('[data-key]').forEach(el=>{
+    const k=el.dataset.key;
+    if(t[k]!==undefined) el.innerHTML=t[k];
+  });
+  document.querySelectorAll('[data-key-ph]').forEach(el=>{
+    const k=el.dataset.keyPh;
+    if(t[k]) el.placeholder=t[k];
+  });
+  document.getElementById('h-sub').textContent=t.h_sub;
+}
+
+// ══════════════════════
+// FILE
+// ══════════════════════
+function handleFile(e){
+  const f=e.target.files[0];if(!f)return;
+  const z=document.getElementById('upload-zone');
+  const w=document.getElementById('preview-wrap');
+  z.classList.add('has-file');z.style.display='none';w.style.display='block';
+  document.getElementById('prev-fn').textContent=f.name;
+  const r=new FileReader();r.onload=ev=>{document.getElementById('preview-img').src=ev.target.result;};
+  if(f.type.startsWith('image/'))r.readAsDataURL(f);
+  else document.getElementById('preview-img').src=`data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120"><rect fill="%2310101A" width="200" height="120"/><text fill="%236B6B90" x="100" y="60" text-anchor="middle" font-size="30">🎬</text></svg>`;
+}
+function removeFile(){
+  document.getElementById('file-input').value='';
+  document.getElementById('upload-zone').classList.remove('has-file');
+  document.getElementById('upload-zone').style.display='';
+  document.getElementById('preview-wrap').style.display='none';
+}
+const uz=document.getElementById('upload-zone');
+uz.addEventListener('dragover',e=>{e.preventDefault();uz.classList.add('drag-over');});
+uz.addEventListener('dragleave',()=>uz.classList.remove('drag-over'));
+uz.addEventListener('drop',e=>{
+  e.preventDefault();uz.classList.remove('drag-over');
+  const f=e.dataTransfer.files[0];
+  if(f){const dt=new DataTransfer();dt.items.add(f);document.getElementById('file-input').files=dt.files;handleFile({target:{files:[f]}});}
+});
+
+// ══════════════════════
+// TYPE / SEV
+// ══════════════════════
+function selType(el){document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');}
+function selSev(el){document.querySelectorAll('.sbtn').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');}
+
+// ══════════════════════
+// SUBMIT
+// ══════════════════════
+function submitReport(){
+  if(submitted)return;
+  const btn=document.getElementById('sub-btn');
+  const sp=document.getElementById('spinner');
+  const bt=document.getElementById('btn-txt');
+  btn.classList.add('loading');sp.style.display='block';
+  bt.textContent={hi:'सूचित कर रहे हैं…',ta:'அறிவிக்கிறோம்…',te:'హెచ్చరిస్తున్నాం…'}[lang]||'Alerting services…';
+  setTimeout(()=>{
+    btn.classList.remove('loading');sp.style.display='none';
+    bt.innerHTML=T[lang].alert_btn;
+    document.getElementById('overlay').classList.add('show');
+  },2800);
+}
+function dismissOK(){
+  document.getElementById('overlay').classList.remove('show');submitted=true;
+  const p=document.getElementById('svc-panel');p.classList.add('show');
+  document.getElementById('inc-id').textContent='INC-'+Math.random().toString(36).toUpperCase().slice(2,8);
+  let s=240;const el=document.getElementById('eta-cd');
+  const ti=setInterval(()=>{s--;if(s<=0){clearInterval(ti);el.textContent='HERE';return;}el.textContent=`${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;},1000);
+  p.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ══════════════════════
+// PAGE NAV
+// ══════════════════════
+function showPg(pg){
+  ['report-pg','chat-pg','arch-pg'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(id==='chat-pg'){el.style.display='none';el.classList.remove('active');}
+    else el.classList.remove('active');
+  });
+  document.querySelectorAll('.mtab,.nit').forEach(el=>el.classList.remove('active'));
+
+  if(pg==='report'){
+    document.getElementById('report-pg').classList.add('active');
+    document.getElementById('mtab-report').classList.add('active');
+    document.getElementById('nav-report').classList.add('active');
+  }else if(pg==='chat'){
+    const cp=document.getElementById('chat-pg');
+    cp.style.display='flex';cp.classList.add('active');
+    document.getElementById('mtab-chat').classList.add('active');
+    document.getElementById('nav-chat').classList.add('active');
+    document.getElementById('nbadge').style.display='none';
+    if(!chatReady)initChat();
+  }else if(pg==='arch'){
+    document.getElementById('arch-pg').classList.add('active');
+    document.getElementById('mtab-arch').classList.add('active');
+  }else{
+    document.getElementById('report-pg').classList.add('active');
+    document.getElementById('mtab-report').classList.add('active');
+    document.getElementById('nav-report').classList.add('active');
+  }
+}
+
+// ══════════════════════
+// CHAT
+// ══════════════════════
+function initChat(){
+  chatReady=true;
+  addAI(T[lang].welcome);
+}
+
+function nowStr(){
+  const d=new Date();
+  return`${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+}
+
+function addAI(text){
+  const m=document.getElementById('messages');
+  const d=document.createElement('div');d.className='msg ai';
+  d.innerHTML=`<div class="mavatar ai">🤖</div><div><div class="bubble">${text.replace(/\n/g,'<br>')}</div><div class="mtime">${nowStr()}</div></div>`;
+  m.appendChild(d);m.scrollTop=m.scrollHeight;
+}
+function addUser(text){
+  const m=document.getElementById('messages');
+  const d=document.createElement('div');d.className='msg user';
+  d.innerHTML=`<div class="mavatar usr">👤</div><div><div class="bubble">${text}</div><div class="mtime">${nowStr()}</div></div>`;
+  m.appendChild(d);m.scrollTop=m.scrollHeight;
+}
+function showTyping(){
+  const m=document.getElementById('messages');
+  const d=document.createElement('div');d.className='msg ai';d.id='typing';
+  d.innerHTML=`<div class="mavatar ai">🤖</div><div class="typing-b"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
+  m.appendChild(d);m.scrollTop=m.scrollHeight;
+}
+function rmTyping(){const t=document.getElementById('typing');if(t)t.remove();}
+
+function getReply(userText){
+  const bank=RESP[lang]||RESP.en;
+  const low=userText.toLowerCase();
+  for(const key of Object.keys(bank)){
+    if(low.includes(key.toLowerCase())) return bank[key];
+  }
+  const fallback={
+    en:"I'm here to help! For any emergency, please call <strong>112</strong> immediately. You can also use the 📷 Report tab to automatically dispatch emergency services to your location. What specific help do you need?",
+    hi:"मैं मदद के लिए यहां हूं! किसी भी आपातकाल के लिए <strong>112</strong> पर कॉल करें। 📷 रिपोर्ट टैब से स्वचालित रूप से आपातकालीन सेवाएं बुला सकते हैं।",
+    ta:"நான் உதவ இங்கே இருக்கிறேன்! எந்த அவசரநிலைக்கும் <strong>112</strong> அழைக்கவும். 📷 புகார் தாவலைப் பயன்படுத்தி அவசர சேவைகளை அனுப்பலாம்.",
+    te:"నేను సహాయం చేయడానికి ఇక్కడ ఉన్నాను! ఏ అత్యవసరానికైనా <strong>112</strong> కు కాల్ చేయండి. 📷 నివేదిక టాబ్ ఉపయోగించి అత్యవసర సేవలను పంపవచ్చు."
+  };
+  return fallback[lang]||fallback.en;
+}
+
+async function sendMsg(){
+  const inp=document.getElementById('chat-input');
+  const txt=inp.value.trim();if(!txt)return;
+  inp.value='';inp.style.height='auto';
+  if(!chatReady)initChat();
+  addUser(txt);showTyping();
+  await new Promise(r=>setTimeout(r,800+Math.random()*600));
+  rmTyping();addAI(getReply(txt));
+}
+
+function sendChip(el,chipKey){
+  if(!chatReady)initChat();
+  if(document.getElementById('chat-pg').style.display!=='flex')showPg('chat');
+  const bank=RESP[lang]||RESP.en;
+  const rKey=CHIP_RESP[chipKey];
+  const reply=bank[rKey]||getReply(rKey);
+  const label=el.textContent;
+  addUser(label);showTyping();
+  setTimeout(()=>{rmTyping();addAI(reply);},900);
+}
+
+// ══ START ══
+applyT();
+</script>
+</body>
+</html>
